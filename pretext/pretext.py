@@ -32,7 +32,8 @@
 
 # Set up logging package:
 import logging
-log = logging.getLogger('ptxlogger')
+
+log = logging.getLogger("ptxlogger")
 
 # Can show full traceback, and then continue processing
 # https://stackoverflow.com/questions/3702675/
@@ -148,7 +149,9 @@ def mathjax_latex(xml_source, pub_file, out_file, dest_dir, math_format):
     mjoutput = os.path.join(tmp_dir, "mj-output-{}.html".format(math_format))
 
     log.debug("temporary directory for MathJax work: {}".format(tmp_dir))
-    log.debug("extracting LaTeX from {} and collected in {}".format(xml_source, mjinput))
+    log.debug(
+        "extracting LaTeX from {} and collected in {}".format(xml_source, mjinput)
+    )
 
     # SVG, MathML, and PNG are visual and we help authors move punctuation into
     # displays, but not into inline versions.  Nemeth braille and speech are not,
@@ -370,10 +373,10 @@ def asymptote_conversion(
                 log.warning("\n".join(msg))
     os.chdir(owd)
 
+
 def sage_conversion(
     xml_source, pub_file, stringparams, xmlid_root, dest_dir, outformat
 ):
-
     # To make all four formats, just call this routine
     # four times and halt gracefully with an explicit "return"
     if outformat == "all":
@@ -427,8 +430,16 @@ def sage_conversion(
         shutil.copy2(sageout, dest_dir)
     os.chdir(owd)
 
+
 def latex_image_conversion(
-    xml_source, pub_file, stringparams, xmlid_root, dest_dir, outformat, method, pyMuPDF=False
+    xml_source,
+    pub_file,
+    stringparams,
+    xmlid_root,
+    dest_dir,
+    outformat,
+    method,
+    pyMuPDF=False,
 ):
     # stringparams is a dictionary, best for lxml parsing
 
@@ -444,7 +455,7 @@ def latex_image_conversion(
 
     if pyMuPDF:
         try:
-            import fitz # for svg and png conversion
+            import fitz  # for svg and png conversion
         except ImportError:
             raise ImportError(__module_warning.format("pyMuPDF"))
 
@@ -472,9 +483,7 @@ def latex_image_conversion(
     # not supported outside of the managed directory scheme (2021-07-28)
     # copytree() does not overwrite since tmp_dir is created anew on each use
     _, external_dir = get_managed_directories(xml_source, pub_file)
-    if external_dir:
-        external_dest = os.path.join(tmp_dir, "external")
-        shutil.copytree(external_dir, external_dest)
+    manage_directories(tmp_dir, external_abs=external_dir)
     # now create all the standalone LaTeX source files
     extraction_xslt = os.path.join(ptx_xsl_dir, "extract-latex-image.xsl")
     # no output (argument 3), stylesheet writes out per-image file
@@ -661,6 +670,7 @@ def latex_image_conversion(
 #
 #############################################
 
+
 def datafiles_to_xml(xml_source, pub_file, stringparams, xmlid_root, dest_dir):
     """Convert certain  files in source to text representations in XML files"""
     # stringparams is a dictionary, best for lxml parsing
@@ -670,14 +680,14 @@ def datafiles_to_xml(xml_source, pub_file, stringparams, xmlid_root, dest_dir):
 
     import base64
 
-    msg = 'converting data files from {} to text representations in XML files for placement in {}'
+    msg = "converting data files from {} to text representations in XML files for placement in {}"
     log.info(msg.format(xml_source, dest_dir))
 
     tmp_dir = get_temporary_directory()
     log.debug("temporary directory: {}".format(tmp_dir))
     ptx_xsl_dir = get_ptx_xsl_path()
     extraction_xslt = os.path.join(ptx_xsl_dir, "extract-datafile.xsl")
-    the_files = os.path.join(tmp_dir, 'datafile-list.txt')
+    the_files = os.path.join(tmp_dir, "datafile-list.txt")
     # support publisher file, subtree argument
     if pub_file:
         stringparams["publisher"] = pub_file
@@ -686,7 +696,9 @@ def datafiles_to_xml(xml_source, pub_file, stringparams, xmlid_root, dest_dir):
     # no output (argument 3), stylesheet writes out per-image file
     # outputs a list of ids, but we just loop over created files
     log.info("extracting source files from {}".format(xml_source))
-    log.info("string parameters passed to extraction stylesheet: {}".format(stringparams) )
+    log.info(
+        "string parameters passed to extraction stylesheet: {}".format(stringparams)
+    )
     xsltproc(extraction_xslt, xml_source, the_files, None, stringparams)
 
     # Copy in external resources (e.g., js code)
@@ -695,7 +707,7 @@ def datafiles_to_xml(xml_source, pub_file, stringparams, xmlid_root, dest_dir):
     # Each file receives a single element as its root
     # element. These are templates for that entry
     image_info = '<pi:image-b64 xmlns:pi="http://pretextbook.org/2020/pretext/internal" pi:mime-type="{}" pi:base64="{}"/>'
-    text_info  = '<pi:text-file xmlns:pi="http://pretextbook.org/2020/pretext/internal">{}</pi:text-file>'
+    text_info = '<pi:text-file xmlns:pi="http://pretextbook.org/2020/pretext/internal">{}</pi:text-file>'
 
     # read lines, one-per-binary
     with open(the_files, "r") as datafile_list:
@@ -721,19 +733,23 @@ def datafiles_to_xml(xml_source, pub_file, stringparams, xmlid_root, dest_dir):
                 mime_type = "image/jpeg"
             elif lcext == "png":
                 mime_type = "image/png"
-            elif lcext =="gif":
+            elif lcext == "gif":
                 mime_type = "image/gif"
-            elif lcext =="webp":
+            elif lcext == "webp":
                 mime_type = "image/webp"
-            elif lcext =="avif":
+            elif lcext == "avif":
                 mime_type = "image/avif"
-            elif lcext =="apng":
+            elif lcext == "apng":
                 mime_type = "image/apng"
             # Do we want to base64 an XML file???
-            elif lcext =="svg":
+            elif lcext == "svg":
                 mime_type = "image/svg+xml"
             else:
-                log.info("PTX:WARNING : MIME type of image {} not determined".format(data_file))
+                log.info(
+                    "PTX:WARNING : MIME type of image {} not determined".format(
+                        data_file
+                    )
+                )
                 mime_type = "unknown"
 
             # Open binary file and encode in base64 with standard module
@@ -751,7 +767,7 @@ def datafiles_to_xml(xml_source, pub_file, stringparams, xmlid_root, dest_dir):
         # built text/XML representations, we know this really is
         # "straight" ASCII.  The XML header says "UTF-8", which
         # is not a problem?
-        out_filename = os.path.join(dest_dir, visible_id + '.xml')
+        out_filename = os.path.join(dest_dir, visible_id + ".xml")
         with open(out_filename, "w") as f:
             f.write(__xml_header)
             f.write(xml_representation)
@@ -767,7 +783,6 @@ def datafiles_to_xml(xml_source, pub_file, stringparams, xmlid_root, dest_dir):
 def latex_tactile_image_conversion(
     xml_source, pub_file, stringparams, dest_dir, outformat
 ):
-
     # Outline:
     #   1.  Locate, isolate, convert math to Unicode braille
     #   2.  Locate, isolate labels in images, replace math
@@ -791,7 +806,9 @@ def latex_tactile_image_conversion(
     # for killing output
     devnull = open(os.devnull, "w")
     tmp_dir = get_temporary_directory()
-    log.debug("temporary directory for latex-image tactile graphics: {}".format(tmp_dir))
+    log.debug(
+        "temporary directory for latex-image tactile graphics: {}".format(tmp_dir)
+    )
     ptx_xsl_dir = get_ptx_xsl_path()
 
     # 1. Create an XML file of Nemeth representations for entire
@@ -871,9 +888,7 @@ def latex_tactile_image_conversion(
     # not supported outside of the managed directory scheme (2021-07-28)
     # copytree() does not overwrite since tmp_dir is created anew on each use
     _, external_dir = get_managed_directories(xml_source, pub_file)
-    if external_dir:
-        external_dest = os.path.join(tmp_dir, "external")
-        shutil.copytree(external_dir, external_dest)
+    manage_directories(tmp_dir, external_abs=external_dir)
     # now create all the standalone LaTeX source files
     extraction_xslt = os.path.join(ptx_xsl_dir, "extract-latex-image.xsl")
     # Output is multiple *.tex files
@@ -927,6 +942,7 @@ def latex_tactile_image_conversion(
     # change directory back so the temp directory can be deleted.
     os.chdir(owd)
 
+
 #####################
 # Traces for CodeLens
 #####################
@@ -934,8 +950,8 @@ def latex_tactile_image_conversion(
 # Convert program source code into traces for the interactive
 # CodeLens tool in Runestone
 
-def tracer(xml_source, pub_file, stringparams, xmlid_root, dest_dir):
 
+def tracer(xml_source, pub_file, stringparams, xmlid_root, dest_dir):
     # to ensure provided stringparams aren't mutated unintentionally
     stringparams = stringparams.copy()
 
@@ -947,10 +963,12 @@ def tracer(xml_source, pub_file, stringparams, xmlid_root, dest_dir):
 
     # Trace Server: language abbreviation goes in argument
     url_string = "http://tracer.runestone.academy:5000/trace{}"
-    server_error_msg = '\n'.join([
-           "the server at {} could not process program source file {}.",
-           "No trace file was produced.  The generated traceback follows, other files will still be processed."
-           ])
+    server_error_msg = "\n".join(
+        [
+            "the server at {} could not process program source file {}.",
+            "No trace file was produced.  The generated traceback follows, other files will still be processed.",
+        ]
+    )
 
     log.info(
         "creating trace data from {} for placement in {}".format(xml_source, dest_dir)
@@ -976,8 +994,8 @@ def tracer(xml_source, pub_file, stringparams, xmlid_root, dest_dir):
         runestone_id = program_quad[0]
         visible_id = program_quad[1]
         language = program_quad[2]
-        if language == 'python':
-            url = url_string.format('py')
+        if language == "python":
+            url = url_string.format("py")
         else:
             # c, cpp, java
             url = url_string.format(language)
@@ -1102,7 +1120,9 @@ def webwork_to_xml(
             "courseID": ww_xml.find("server-params-pub").find("course-id").text,
             "userID": ww_xml.find("server-params-pub").find("user-id").text,
             "password": ww_xml.find("server-params-pub").find("password").text,
-            "course_password": ww_xml.find("server-params-pub").find("course-password").text,
+            "course_password": ww_xml.find("server-params-pub")
+            .find("course-password")
+            .text,
         }
     else:
         server_params_pub = {}
@@ -1127,29 +1147,33 @@ def webwork_to_xml(
                 copiedfrom[ele.get("id")] = ele.get("copied-from")
             pghuman[ele.get("id")] = ele.find("pghuman").text
             for dense in ele.iter("pgdense"):
-                if dense.get("hint")=="yes" and dense.get("solution")=="yes":
+                if dense.get("hint") == "yes" and dense.get("solution") == "yes":
                     pgdense[ele.get("id")] = dense.text
                     pgdense["hint_yes_solution_yes"][ele.get("id")] = dense.text
-                elif dense.get("hint")=="yes" and dense.get("solution")=="no":
+                elif dense.get("hint") == "yes" and dense.get("solution") == "no":
                     pgdense["hint_yes_solution_no"][ele.get("id")] = dense.text
-                elif dense.get("hint")=="no" and dense.get("solution")=="yes":
+                elif dense.get("hint") == "no" and dense.get("solution") == "yes":
                     pgdense["hint_no_solution_yes"][ele.get("id")] = dense.text
-                elif dense.get("hint")=="no" and dense.get("solution")=="no":
+                elif dense.get("hint") == "no" and dense.get("solution") == "no":
                     pgdense["hint_no_solution_no"][ele.get("id")] = dense.text
 
     # ideally, pub_file is in use, in which case server_params_pub is nonempty.
     # if no pub_file in use, rely on server_params.
     # if both present, use server_params_pub and give warning
     # if neither in use give warning and fail
-    if not(server_params_pub) and server_params is None:
-        raise ValueError("No WeBWorK server declared. Declare WeBWorK server in publication/webwork/@server.")
-    elif not(server_params_pub):
+    if not (server_params_pub) and server_params is None:
+        raise ValueError(
+            "No WeBWorK server declared. Declare WeBWorK server in publication/webwork/@server."
+        )
+    elif not (server_params_pub):
         # We rely on the argument server_params
         # This is deprecated in favor of using a publication file
-        log.warning("WeBWorK server declared using -s argument.\n" +
-              "              Please consider using a publication file with publication/webwork/@server instead.")
+        log.warning(
+            "WeBWorK server declared using -s argument.\n"
+            + "              Please consider using a publication file with publication/webwork/@server instead."
+        )
         server_params = server_params.strip()
-        if (server_params.startswith("(") and server_params.endswith(")")):
+        if server_params.startswith("(") and server_params.endswith(")"):
             server_params = server_params.strip("()")
             split_server_params = server_params.split(",")
             ww_domain = sanitize_url(split_server_params[0])
@@ -1158,22 +1182,24 @@ def webwork_to_xml(
             password = sanitize_alpha_num_underscore(split_server_params[3])
             course_password = sanitize_alpha_num_underscore(split_server_params[4])
         else:
-            ww_domain       = sanitize_url(server_params)
-            courseID        = "anonymous"
-            userID          = "anonymous"
-            password        = "anonymous"
+            ww_domain = sanitize_url(server_params)
+            courseID = "anonymous"
+            userID = "anonymous"
+            password = "anonymous"
             course_password = "anonymous"
     else:
         # Now we know server_params_pub is nonepty
         # Use it, and warn if server_params argument is also present
         if server_params is not None:
-            log.warning("Publication file in use and -s argument passed for WeBWorK server.\n"
-                  + "              -s argument will be ignored.\n"
-                  + "              Using publication/webwork values (or defaults) instead.")
-        ww_domain       = sanitize_url(server_params_pub["ww_domain"])
-        courseID        = server_params_pub["courseID"]
-        userID          = server_params_pub["userID"]
-        password        = server_params_pub["password"]
+            log.warning(
+                "Publication file in use and -s argument passed for WeBWorK server.\n"
+                + "              -s argument will be ignored.\n"
+                + "              Using publication/webwork values (or defaults) instead."
+            )
+        ww_domain = sanitize_url(server_params_pub["ww_domain"])
+        courseID = server_params_pub["courseID"]
+        userID = server_params_pub["userID"]
+        password = server_params_pub["password"]
         course_password = server_params_pub["course_password"]
 
     ww_domain_ww2 = ww_domain + "/webwork2/"
@@ -1186,22 +1212,22 @@ def webwork_to_xml(
     try:
         params_for_version_determination = dict(
             problemSeed=1,
-            displayMode='PTX',
+            displayMode="PTX",
             courseID=courseID,
             userID=userID,
             course_password=course_password,
-            outputformat='raw'
+            outputformat="raw",
         )
-        version_determination_json = requests.get(url=ww_domain_path, params=params_for_version_determination).json()
+        version_determination_json = requests.get(
+            url=ww_domain_path, params=params_for_version_determination
+        ).json()
         ww_version = ""
         if "ww_version" in version_determination_json:
             ww_version = version_determination_json["ww_version"]
-            ww_version_match = re.search(
-                r"((\d+)\.(\d+))", ww_version, re.I
-            )
+            ww_version_match = re.search(r"((\d+)\.(\d+))", ww_version, re.I)
     except Exception as e:
         root_cause = str(e)
-        msg = ("PTX:ERROR:   There was a problem contacting the WeBWorK server.\n")
+        msg = "PTX:ERROR:   There was a problem contacting the WeBWorK server.\n"
         raise ValueError(msg.format(ww_domain_ww2) + root_cause)
 
     # Now if that failed, try to infer the version from what is printed on the landing page.
@@ -1260,7 +1286,6 @@ def webwork_to_xml(
     webwork_representations = ET.Element("webwork-representations", nsmap=NSMAP)
     # Choose one of the dictionaries to take its keys as what to loop through
     for problem in origin:
-
         # It is more convenient to identify server problems by file path,
         # and PTX problems by internal ID
         problem_identifier = problem if (origin[problem] == "ptx") else source[problem]
@@ -1279,20 +1304,32 @@ def webwork_to_xml(
 
         # If and only if the server is version 2.16, we adjust PG code to use PGtikz.pl
         # instead of PGlateximage.pl
-        if ww_major_version == 2 and ww_minor_version == 16 and origin[problem] == "ptx":
-            pgdense[problem] = pgdense[problem].replace('PGlateximage.pl','PGtikz.pl')
-            pgdense[problem] = pgdense[problem].replace('createLaTeXImage','createTikZImage')
-            pgdense[problem] = pgdense[problem].replace('BEGIN_LATEX_IMAGE','BEGIN_TIKZ')
-            pgdense[problem] = pgdense[problem].replace('END_LATEX_IMAGE','END_TIKZ')
-            pghuman[problem] = pghuman[problem].replace('PGlateximage.pl','PGtikz.pl')
-            pghuman[problem] = pghuman[problem].replace('createLaTeXImage','createTikZImage')
-            pghuman[problem] = pghuman[problem].replace('BEGIN_LATEX_IMAGE','BEGIN_TIKZ')
-            pghuman[problem] = pghuman[problem].replace('END_LATEX_IMAGE','END_TIKZ')
+        if (
+            ww_major_version == 2
+            and ww_minor_version == 16
+            and origin[problem] == "ptx"
+        ):
+            pgdense[problem] = pgdense[problem].replace("PGlateximage.pl", "PGtikz.pl")
+            pgdense[problem] = pgdense[problem].replace(
+                "createLaTeXImage", "createTikZImage"
+            )
+            pgdense[problem] = pgdense[problem].replace(
+                "BEGIN_LATEX_IMAGE", "BEGIN_TIKZ"
+            )
+            pgdense[problem] = pgdense[problem].replace("END_LATEX_IMAGE", "END_TIKZ")
+            pghuman[problem] = pghuman[problem].replace("PGlateximage.pl", "PGtikz.pl")
+            pghuman[problem] = pghuman[problem].replace(
+                "createLaTeXImage", "createTikZImage"
+            )
+            pghuman[problem] = pghuman[problem].replace(
+                "BEGIN_LATEX_IMAGE", "BEGIN_TIKZ"
+            )
+            pghuman[problem] = pghuman[problem].replace("END_LATEX_IMAGE", "END_TIKZ")
             # We crudely remove tikzpicture environment delimiters
-            pgdense[problem] = pgdense[problem].replace('\\begin{tikzpicture}','')
-            pgdense[problem] = pgdense[problem].replace('\\end{tikzpicture}','')
-            pghuman[problem] = pghuman[problem].replace('\\begin{tikzpicture}','')
-            pghuman[problem] = pghuman[problem].replace('\\end{tikzpicture}','')
+            pgdense[problem] = pgdense[problem].replace("\\begin{tikzpicture}", "")
+            pgdense[problem] = pgdense[problem].replace("\\end{tikzpicture}", "")
+            pghuman[problem] = pghuman[problem].replace("\\begin{tikzpicture}", "")
+            pghuman[problem] = pghuman[problem].replace("\\end{tikzpicture}", "")
 
         # The code in pgdense[problem] may have `$refreshCachedImages=1;`
         # We want to keep this for the code that is sent to the server for static harvesting,
@@ -1302,7 +1339,9 @@ def webwork_to_xml(
         # like `$refreshCachedImages  =  'true' ;` so instead, we change `$refreshCachedImages`
         # to something inert
         if origin[problem] == "ptx":
-            embed_problem = re.sub(r'(\$refreshCachedImages)(?![\w\d])', r'\1Inert', pgdense[problem])
+            embed_problem = re.sub(
+                r"(\$refreshCachedImages)(?![\w\d])", r"\1Inert", pgdense[problem]
+            )
 
         # make base64 for PTX problems
         if origin[problem] == "ptx":
@@ -1310,9 +1349,9 @@ def webwork_to_xml(
                 pgbase64 = base64.b64encode(bytes(pgdense[problem], "utf-8")).decode(
                     "utf-8"
                 )
-                embed_problem_base64 = base64.b64encode(bytes(embed_problem, "utf-8")).decode(
-                    "utf-8"
-                )
+                embed_problem_base64 = base64.b64encode(
+                    bytes(embed_problem, "utf-8")
+                ).decode("utf-8")
             elif ww_reps_version == "1":
                 pgbase64 = {}
                 for hint_sol in [
@@ -1403,7 +1442,7 @@ def webwork_to_xml(
 
         bad_xml = False
         try:
-            response_root = ET.fromstring(bytes(response.text, encoding='utf-8'))
+            response_root = ET.fromstring(bytes(response.text, encoding="utf-8"))
         except:
             response_root = ET.Element("webwork")
             bad_xml = True
@@ -1508,9 +1547,7 @@ def webwork_to_xml(
                         else:
                             break
                     if index == 127:
-                        log.warning(
-                            "Could not find delimiter for verbatim expression"
-                        )
+                        log.warning("Could not find delimiter for verbatim expression")
                         return "!Could not find delimiter for verbatim expression.!"
                     else:
                         response_text += item.replace(original_delimiter, chr(index))
@@ -1601,10 +1638,7 @@ def webwork_to_xml(
             except Exception as e:
                 root_cause = str(e)
                 msg = "PTX:ERROR: there was a problem saving an image file,\n Filename: {}\n"
-                raise ValueError(
-                    msg.format(destination_image_file)
-                    + root_cause
-                )
+                raise ValueError(msg.format(destination_image_file) + root_cause)
             # unpack if it's a tgz
             if image_extension == ".tgz":
                 tgzfile = tarfile.open(destination_image_file)
@@ -1617,14 +1651,16 @@ def webwork_to_xml(
                     try:
                         os.rename(
                             os.path.join(ww_images_dir, "image.{}".format(ext)),
-                            os.path.join(ww_images_dir, ptx_image_name + ".{}".format(ext)),
+                            os.path.join(
+                                ww_images_dir, ptx_image_name + ".{}".format(ext)
+                            ),
                         )
                     except:
                         log.warning(msg.format(destination_image_file, ext))
                 os.remove(os.path.join(ww_images_dir, ptx_image_filename))
 
         # Start appending XML children
-        response_root = ET.fromstring(bytes(response_text, encoding='utf-8'))
+        response_root = ET.fromstring(bytes(response_text, encoding="utf-8"))
         # Use "webwork-reps" as parent tag for the various representations of a problem
         webwork_reps = ET.SubElement(webwork_representations, "webwork-reps")
         webwork_reps.set("version", ww_reps_version)
@@ -1703,7 +1739,9 @@ def webwork_to_xml(
                         for child in hnt:
                             chcopy = copy.deepcopy(child)
                             hint.append(chcopy)
-                answer_names = read.xpath(".//fillin/@name|.//var/@name|.//ul/@name|.//ol/@name|.//dl/@name")
+                answer_names = read.xpath(
+                    ".//fillin/@name|.//var/@name|.//ul/@name|.//ol/@name|.//dl/@name"
+                )
                 answer_hashes = response_root.find("./answerhashes")
                 if answer_hashes is not None:
                     for ans in list(answer_hashes):
@@ -1842,7 +1880,6 @@ def webwork_to_xml(
 
 
 def webwork_sets(xml_source, pub_file, stringparams, dest_dir, tgz):
-
     # to ensure provided stringparams aren't mutated unintentionally
     stringparams = stringparams.copy()
 
@@ -1851,12 +1888,14 @@ def webwork_sets(xml_source, pub_file, stringparams, dest_dir, tgz):
     ptx_xsl_dir = get_ptx_xsl_path()
     extraction_xslt = os.path.join(ptx_xsl_dir, "pretext-ww-problem-sets.xsl")
     tmp_dir = get_temporary_directory()
-    xsltproc(extraction_xslt, xml_source, None, output_dir=tmp_dir, stringparams=stringparams)
+    xsltproc(
+        extraction_xslt, xml_source, None, output_dir=tmp_dir, stringparams=stringparams
+    )
     # We don't explicitly know the name of the folder that has all of the sets
     # But it is the only thing in the tmp_dir
     folder_name = os.listdir(tmp_dir)[0]
     folder = os.path.join(tmp_dir, folder_name)
-    macros_folder = os.path.join(folder, 'macros')
+    macros_folder = os.path.join(folder, "macros")
     os.mkdir(macros_folder)
     pg_macros(xml_source, pub_file, stringparams, macros_folder)
     if tgz:
@@ -1864,7 +1903,7 @@ def webwork_sets(xml_source, pub_file, stringparams, dest_dir, tgz):
         targz(archive_file, folder)
         shutil.copy2(archive_file, dest_dir)
     else:
-        shutil.copytree(folder, os.path.join(dest_dir,folder_name))
+        shutil.copytree(folder, os.path.join(dest_dir, folder_name))
 
 
 ################################
@@ -1875,7 +1914,6 @@ def webwork_sets(xml_source, pub_file, stringparams, dest_dir, tgz):
 
 
 def pg_macros(xml_source, pub_file, stringparams, dest_dir):
-
     # to ensure provided stringparams aren't mutated unintentionally
     stringparams = stringparams.copy()
 
@@ -1883,7 +1921,13 @@ def pg_macros(xml_source, pub_file, stringparams, dest_dir):
         stringparams["publisher"] = pub_file
     ptx_xsl_dir = get_ptx_xsl_path()
     extraction_xslt = os.path.join(ptx_xsl_dir, "support", "pretext-pg-macros.xsl")
-    xsltproc(extraction_xslt, xml_source, None, output_dir=dest_dir, stringparams=stringparams)
+    xsltproc(
+        extraction_xslt,
+        xml_source,
+        None,
+        output_dir=dest_dir,
+        stringparams=stringparams,
+    )
 
 
 ##############################
@@ -1894,7 +1938,6 @@ def pg_macros(xml_source, pub_file, stringparams, dest_dir):
 
 
 def youtube_thumbnail(xml_source, pub_file, stringparams, xmlid_root, dest_dir):
-
     # to ensure provided stringparams aren't mutated unintentionally
     stringparams = stringparams.copy()
 
@@ -1950,12 +1993,17 @@ def youtube_thumbnail(xml_source, pub_file, stringparams, xmlid_root, dest_dir):
 #
 ##########################
 
+
 def play_button(dest_dir):
-    '''Copy generic static video image to a directory'''
+    """Copy generic static video image to a directory"""
 
     ptx_xsl_dir = get_ptx_xsl_path()
-    play_button_provided_image = os.path.join(ptx_xsl_dir, "support", "play-button", "play-button.png")
-    log.info('Generating generic video preview, aka "play button" into {}'.format(dest_dir))
+    play_button_provided_image = os.path.join(
+        ptx_xsl_dir, "support", "play-button", "play-button.png"
+    )
+    log.info(
+        'Generating generic video preview, aka "play button" into {}'.format(dest_dir)
+    )
     shutil.copy2(play_button_provided_image, dest_dir)
 
 
@@ -1967,14 +2015,13 @@ def play_button(dest_dir):
 
 
 def qrcode(xml_source, pub_file, stringparams, xmlid_root, dest_dir):
-
     # to ensure provided stringparams aren't mutated unintentionally
     stringparams = stringparams.copy()
 
     # Establish whether there is an image from pub file
     pub_tree = ET.parse(pub_file)
     try:
-        image = pub_tree.find('common').find('qr-code').get('image')
+        image = pub_tree.find("common").find("qr-code").get("image")
         _, external_dir = get_managed_directories(xml_source, pub_file)
         image_path = os.path.join(external_dir, image)
         has_image = True
@@ -2031,14 +2078,15 @@ def qrcode(xml_source, pub_file, stringparams, xmlid_root, dest_dir):
         else:
             # error correction up to 7%
             error_correction = qrcode.constants.ERROR_CORRECT_L
-        qr = qrcode.QRCode(version=None,
-                           error_correction=error_correction,
-                           box_size=10,
-                           border=0
-                           )
+        qr = qrcode.QRCode(
+            version=None, error_correction=error_correction, box_size=10, border=0
+        )
         qr.add_data(url)
         if has_image:
-            qr_image = qr.make_image(image_factory=qrcode.image.styledpil.StyledPilImage, embeded_image_path=image_path)
+            qr_image = qr.make_image(
+                image_factory=qrcode.image.styledpil.StyledPilImage,
+                embeded_image_path=image_path,
+            )
         else:
             qr_image = qr.make_image(fill_color="black", back_color="white")
         # Now save as a PNG
@@ -2068,7 +2116,6 @@ def preview_images(xml_source, pub_file, stringparams, xmlid_root, dest_dir):
     # Interior asynchronous routine to manage the Chromium headless browser.
     # Use the same page instance for the generation of all interactive previews
     async def generate_previews(interactives, baseurl, dest_dir):
-
         # interactives:  list containing the interactive hash/fragment ids [1:]
         # baseurl:       local server's base url (includes local port)
         # dest_dir:      folder where images are saved
@@ -2092,11 +2139,11 @@ def preview_images(xml_source, pub_file, stringparams, xmlid_root, dest_dir):
                 log.info(msg.format(preview_fragment, input_page, filename))
 
                 # goto page and wait for content to load
-                await page.goto(input_page, wait_until='domcontentloaded')
+                await page.goto(input_page, wait_until="domcontentloaded")
                 # wait again, 5 seconds, for more than just splash screens, etc
                 await page.wait_for_timeout(5000)
                 # list of locations, need first (and only) one
-                elt = page.locator(xpath);
+                elt = page.locator(xpath)
                 await elt.screenshot(path=filename, scale="css")
 
                 # copy
@@ -2131,13 +2178,12 @@ def preview_images(xml_source, pub_file, stringparams, xmlid_root, dest_dir):
 
     # Copy in external resources (e.g., js code)
     generated_abs, external_abs = get_managed_directories(xml_source, pub_file)
-    if external_abs:
-        external_dir = os.path.join(tmp_dir, "external")
-        shutil.copytree(external_abs, external_dir)
+    manage_directories(tmp_dir, external_abs=external_abs)
 
     # Spawn a new process running a local html.server
     import subprocess
     import random
+
     # Try a standard port and if it fails, try a random port
     port = 8888
     looking_for_port = True
@@ -2148,7 +2194,12 @@ def preview_images(xml_source, pub_file, stringparams, xmlid_root, dest_dir):
             numAttempt = numAttempt + 1
             log.info(f"Opening subprocess http.server with port={port}")
             # -u so that stdout and stderr are not cached
-            server = subprocess.Popen([sys.executable, "-u", "-m", "http.server", f"{port}", "-d", tmp_dir], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            server = subprocess.Popen(
+                [sys.executable, "-u", "-m", "http.server", f"{port}", "-d", tmp_dir],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
             # Check if terminated. Allow 1 second to start-up.
             try:
                 result = server.wait(1)
@@ -2176,7 +2227,9 @@ def preview_images(xml_source, pub_file, stringparams, xmlid_root, dest_dir):
     try:
         log.debug("Using http.server subprocess {}".format(server.pid))
         baseurl = "http://localhost:{}".format(port)
-        asyncio.get_event_loop().run_until_complete(generate_previews(interactives, baseurl, dest_dir))
+        asyncio.get_event_loop().run_until_complete(
+            generate_previews(interactives, baseurl, dest_dir)
+        )
     finally:
         # close the server and report (debug) results
         log.info("Closing http.server subprocess")
@@ -2305,7 +2358,6 @@ def all_images(xml, pub_file, stringparams, xmlid_root):
 
 
 def mom_static_problems(xml_source, pub_file, stringparams, xmlid_root, dest_dir):
-
     # to ensure provided stringparams aren't mutated unintentionally
     stringparams = stringparams.copy()
 
@@ -2374,7 +2426,7 @@ def braille(xml_source, pub_file, stringparams, out_file, dest_dir, page_format)
 
     # get chunk level from publisher file, start with sentinel
     # eventually passed to routine that splits up a BRF
-    chunk_level = ''
+    chunk_level = ""
     if pub_file:
         # parse publisher file, xinclude is conceivable
         # for multiple similar publisher files with common parts
@@ -2388,25 +2440,25 @@ def braille(xml_source, pub_file, stringparams, out_file, dest_dir, page_format)
             attrs = chunk_elt[0].attrib
             # check for attribute @level
             if "level" in attrs:
-                chunk_level = chunk_elt[0].attrib['level']
+                chunk_level = chunk_elt[0].attrib["level"]
                 # respected values are '0' and '1', as *strings*
-                if chunk_level in ['0', '1']:
+                if chunk_level in ["0", "1"]:
                     msg = 'braille chunking level (from publisher file) set to "{}"'
                     log.info(msg.format(chunk_level))
                 else:
                     msg = 'braille chunking level in publisher file should be "0" or "1", not "{}".'
                     log.warning(msg.format(chunk_level))
-                    chunk_level = ''
+                    chunk_level = ""
     # never set, or set to an improper value
     # latter will have issued a warning above
-    if chunk_level == '':
+    if chunk_level == "":
         msg = 'braille chunking level was never elected properly in a publisher file, using default value, "0".'
         log.debug(msg)
-        chunk_level = '0'
+        chunk_level = "0"
 
     # Temporarily neuter all of above
     log.warning("Any elective chunking is temporarily disabled")
-    chunk_level = '0'
+    chunk_level = "0"
 
     # Build into a scratch directory
     tmp_dir = get_temporary_directory()
@@ -2445,12 +2497,12 @@ def braille(xml_source, pub_file, stringparams, out_file, dest_dir, page_format)
 
     # move out of temporary directory as final product(s)
     # chunk level is either '0' or '1' (exclusive "if" follow)
-    if chunk_level == '0':
+    if chunk_level == "0":
         # monolithic file
         final_brf = get_output_filename(xml_source, out_file, dest_dir, ".brf")
         shutil.copyfile(temp_brf, final_brf)
         log.info("Single BRF file deposited as {}".format(final_brf))
-    if chunk_level == '1':
+    if chunk_level == "1":
         # chunked into chapters
         # directory switch could be moved to split routine,
         # or it could be done in temporary directory and copied out
@@ -2458,9 +2510,11 @@ def braille(xml_source, pub_file, stringparams, out_file, dest_dir, page_format)
         _split_brf(temp_brf)
         log.info("BRF file chunked and deposited in {}".format(dest_dir))
 
+
 ############################
 # Splitting braille chapters
 ############################
+
 
 def _split_brf(filename):
     """Decompose a BRF file for a book into multiple files of chapters"""
@@ -2484,29 +2538,28 @@ def _split_brf(filename):
     #
     # There are limited checks to let the user know when something goes wrong.
 
-
     # Utilities to convert BRF digits into ASCII digits
-    brf_numbers = 'abcdefghij'
-    num_numbers = '1234567890'
-    brf_to_num_dict = dict(zip(brf_numbers,num_numbers))
-    num_to_brf_dict = dict(zip(num_numbers,brf_numbers))
+    brf_numbers = "abcdefghij"
+    num_numbers = "1234567890"
+    brf_to_num_dict = dict(zip(brf_numbers, num_numbers))
+    num_to_brf_dict = dict(zip(num_numbers, brf_numbers))
 
     def brf_to_num(string):
-        out = ''
+        out = ""
         for char in string:
             out += brf_to_num_dict[char]
-        return(int(out))
+        return int(out)
 
     def num_to_brf(num):
-        out = ''
+        out = ""
         for char in str(num):
             out += num_to_brf_dict[char]
-        return(out)
+        return out
 
     # Wrapper class for chapter number, chapter page range,
     # chapter body
-    class Chapter():
-        def __init__(self,start_page_num, numbered_chapter,chapter_number):
+    class Chapter:
+        def __init__(self, start_page_num, numbered_chapter, chapter_number):
             self.start_page = start_page_num
             self.numbered = numbered_chapter
             self.number = chapter_number
@@ -2515,12 +2568,12 @@ def _split_brf(filename):
             self.body = []
             self.front_matter = True
 
-        def get_body(self,pages):
-            for page_num in range(self.start_page,self.end_page):
+        def get_body(self, pages):
+            for page_num in range(self.start_page, self.end_page):
                 self.body += pages[page_num]
 
         def write_body(self):
-        # The last two cases will be used if we want to split frontmatter or backmatter
+            # The last two cases will be used if we want to split frontmatter or backmatter
             if self.numbered:
                 out_filename = f"chapter_{self.number:02d}.brf"
             elif self.front_matter:
@@ -2528,7 +2581,7 @@ def _split_brf(filename):
             else:
                 out_filename = f"backmatter_{self.number}.brf"
 
-            with open(out_filename,'w') as g:
+            with open(out_filename, "w") as g:
                 g.writelines(self.body)
 
     def is_chapter_name(line):
@@ -2541,7 +2594,9 @@ def _split_brf(filename):
                 chapter_number = brf_to_num(re.findall("^[ ]{2}#([a-j]+?) ", line)[0])
             elif len(re.findall("^[ ]{2},\*apt} #([a-j]+?) ", line)) > 0:
                 numbered_chapter = True
-                chapter_number = brf_to_num(re.findall("^[ ]{2},\*apt} #([a-j]+?) ", line)[0])
+                chapter_number = brf_to_num(
+                    re.findall("^[ ]{2},\*apt} #([a-j]+?) ", line)[0]
+                )
             else:
                 numbered_chapter = False
                 chapter_number = -1
@@ -2551,7 +2606,7 @@ def _split_brf(filename):
             chapter_number = -1
         # Return whether the TOC line starts a chapter name, whether it is a numbered chapter
         # and if yes, the chapter number (-1 if not a numbered chapter).
-        return(chapter_name, numbered_chapter, chapter_number)
+        return (chapter_name, numbered_chapter, chapter_number)
 
     # Input line, output a pair (page_num_found, page_num)
     # The first is a Boolean; True if the page number is found on the line,
@@ -2571,12 +2626,12 @@ def _split_brf(filename):
     # If the line is short <40 characters, then definitely the number is on a line below
     #
     # If the line is not short, there are three subcases:
-        # * If the line ends with " #abc #de", then the first one is the chapter
-            # page number and the second is the TOC page number
-        # * If the line ends with only one number precedeed by more than 3 spaces, then the chapter page
-            # number is on a line below.
-        # * If the line ends with only one number precedeed by no more than 3 spaces, then this is the
-            # chapter page number.
+    # * If the line ends with " #abc #de", then the first one is the chapter
+    # page number and the second is the TOC page number
+    # * If the line ends with only one number precedeed by more than 3 spaces, then the chapter page
+    # number is on a line below.
+    # * If the line ends with only one number precedeed by no more than 3 spaces, then this is the
+    # chapter page number.
     #
     # This does take into account some crazy chapter names:
     # "Key algebro-topological properties of 42  123"
@@ -2585,20 +2640,20 @@ def _split_brf(filename):
 
     def find_chapter_page_num(line):
         # Are there lead-to characters " ' "?
-        if len(re.findall(" [']{2,35} #",line)) > 0:
-            m = re.search("[']{2,35} #(.+?)[ |\n]",line)
+        if len(re.findall(" [']{2,35} #", line)) > 0:
+            m = re.search("[']{2,35} #(.+?)[ |\n]", line)
 
-            return(True, brf_to_num(m.group(1)))
+            return (True, brf_to_num(m.group(1)))
         elif len(line) < 40:
-            return(False, -1)
-        elif len(re.findall(" #([a-j]+?)  #[a-j]+?$",line)) > 0:
-            page = brf_to_num(re.findall(" #([a-j]+?)  #[a-j]+?$",line)[0])
-            return(True, page)
-        elif len(re.findall("[ ]{4,35}#[a-j]+?$",line)) > 0:
-            return(False, -1)
-        elif len(re.findall("[ ]{1,3}#([a-j]+?)$",line)) > 0:
-            page = brf_to_num(re.findall("[ ]{1,3}#([a-j]+?)$",line)[0])
-            return(True, page)
+            return (False, -1)
+        elif len(re.findall(" #([a-j]+?)  #[a-j]+?$", line)) > 0:
+            page = brf_to_num(re.findall(" #([a-j]+?)  #[a-j]+?$", line)[0])
+            return (True, page)
+        elif len(re.findall("[ ]{4,35}#[a-j]+?$", line)) > 0:
+            return (False, -1)
+        elif len(re.findall("[ ]{1,3}#([a-j]+?)$", line)) > 0:
+            page = brf_to_num(re.findall("[ ]{1,3}#([a-j]+?)$", line)[0])
+            return (True, page)
         else:
             raise ValueError(f"A weird long TOC line found:\n{line}")
 
@@ -2612,34 +2667,47 @@ def _split_brf(filename):
     # All are returned as lists of lines.
 
     def get_TOC(filename):
-        f = open(filename,'r', encoding="latin-1")
-        front_matter = [] # We want to keep the entire front matter up to and including TOC, it'll be one of the chunks
-        TOC = [] # This will keep the TOC only
-        text_body = [] # We want to get the text body, to be split into pages and then chapters
+        f = open(filename, "r", encoding="latin-1")
+        front_matter = (
+            []
+        )  # We want to keep the entire front matter up to and including TOC, it'll be one of the chunks
+        TOC = []  # This will keep the TOC only
+        text_body = (
+            []
+        )  # We want to get the text body, to be split into pages and then chapters
 
         is_contents = False
 
         while not is_contents:
             line = f.readline()
             front_matter.append(line)
-            if line == '':
-                raise ValueError("Reached the end of file while looking for Table of Contents")
+            if line == "":
+                raise ValueError(
+                    "Reached the end of file while looking for Table of Contents"
+                )
 
-            if len(re.findall("3t5ts",line)) > 0: # if a line contains the word 'contents', in the middle
-                if re.search("3t5ts",line).start() > 10 and re.search("3t5ts",line).end() < 30:
+            if (
+                len(re.findall("3t5ts", line)) > 0
+            ):  # if a line contains the word 'contents', in the middle
+                if (
+                    re.search("3t5ts", line).start() > 10
+                    and re.search("3t5ts", line).end() < 30
+                ):
                     is_contents = True
                     log.debug("TOC found")
 
         while is_contents:
             line = f.readline()
 
-            if line == '':
-                raise ValueError("Reached end of file while reading the Table of Contents")
+            if line == "":
+                raise ValueError(
+                    "Reached end of file while reading the Table of Contents"
+                )
 
             # Check if the line is likely centered and at the top of the page:
-            trailing_spaces = 40 - len(line) - 2 # -2 for good luck
+            trailing_spaces = 40 - len(line) - 2  # -2 for good luck
             pattern = f"\f[ ]{ {trailing_spaces} }"
-            if len(re.findall(pattern,line)) == 0:
+            if len(re.findall(pattern, line)) == 0:
                 # if not centered at the top, then add to the TOC list and move on
                 TOC.append(line)
                 front_matter.append(line)
@@ -2647,7 +2715,7 @@ def _split_brf(filename):
                 temp_line = line
                 line = f.readline()
 
-                if line == '\n':
+                if line == "\n":
                     # if the line after the centered one is empty,
                     # then we are likely at the start of the next chapter, so done with TOC
                     is_contents = False
@@ -2661,12 +2729,12 @@ def _split_brf(filename):
                     front_matter.append(temp_line)
                     front_matter.append(line)
 
-        while line != '':
+        while line != "":
             line = f.readline()
             text_body.append(line)
 
         f.close()
-        return(TOC, front_matter, text_body)
+        return (TOC, front_matter, text_body)
 
     # Scan TOC, if a Chapter line is detected (two spaces followed by [,|#] -- anything else?),
     # then look for a page number of the chapter and append to the list of chapter pages
@@ -2682,48 +2750,64 @@ def _split_brf(filename):
                 (page_num_found, start_page_num) = find_chapter_page_num(line)
                 while not page_num_found:
                     line_number += 1
-                    if line_number == len(TOC)-1:
-                        raise ValueError("Reached end of TOC while looking for the page number")
+                    if line_number == len(TOC) - 1:
+                        raise ValueError(
+                            "Reached end of TOC while looking for the page number"
+                        )
 
                     line = TOC[line_number]
                     (page_num_found, start_page_num) = find_chapter_page_num(line)
 
-                chapter_list.append(Chapter(start_page_num, numbered_chapter,chapter_number))
+                chapter_list.append(
+                    Chapter(start_page_num, numbered_chapter, chapter_number)
+                )
 
             line_number += 1
-        return(chapter_list)
+        return chapter_list
 
     def split_body_into_pages(text_body):
-    # text_body is a list of lines, let's make it into a dictionary of pages
-    # Each element of 'pages' is a list of lines on the same page, indexed by the
-    # number of the page in BRF file
+        # text_body is a list of lines, let's make it into a dictionary of pages
+        # Each element of 'pages' is a list of lines on the same page, indexed by the
+        # number of the page in BRF file
         pages = dict()
 
         if len(re.findall("\f", text_body[0])) == 0:
-            raise ValueError("Unexpected first line of body text: does not start with new page character")
+            raise ValueError(
+                "Unexpected first line of body text: does not start with new page character"
+            )
         current_page = [text_body[0]]
 
         for number, line in enumerate(text_body[1:]):
-            if line != '': # if we are not at the end
+            if line != "":  # if we are not at the end
                 if len(re.findall("\f", line)) == 0:
-                # if we are not starting a new page
+                    # if we are not starting a new page
                     current_page.append(line)
-                else: # get the page number of the current page, put it in dict and start a new current page
-                    prev_line = text_body[number] # not 'number - 1' because we are starting with text_body[1]
+                else:  # get the page number of the current page, put it in dict and start a new current page
+                    prev_line = text_body[
+                        number
+                    ]  # not 'number - 1' because we are starting with text_body[1]
 
-                    if len(re.findall("[ ]{2}#([a-j]+?)$",prev_line)) == 0:
-                        raise ValueError(f"Page number not found, expected to be on the line\n{prev_line}")
+                    if len(re.findall("[ ]{2}#([a-j]+?)$", prev_line)) == 0:
+                        raise ValueError(
+                            f"Page number not found, expected to be on the line\n{prev_line}"
+                        )
                     else:
-                        page_num = brf_to_num(re.findall("[ ]{2}#([a-j]+?)$",prev_line)[0])
+                        page_num = brf_to_num(
+                            re.findall("[ ]{2}#([a-j]+?)$", prev_line)[0]
+                        )
                         pages[page_num] = current_page
                         current_page = [line]
             # if we are at the last line, nothing to be done
         log.debug(f"Successfully split text into {page_num} pages")
-        return(pages)
+        return pages
 
-    def write_chapters(chapter_list, front_matter, text_body, \
-                       split_frontmatter = False, split_backmatter = False):
-
+    def write_chapters(
+        chapter_list,
+        front_matter,
+        text_body,
+        split_frontmatter=False,
+        split_backmatter=False,
+    ):
         pages = split_body_into_pages(text_body)
         is_front_matter = True
         unnumbered_counter = 1
@@ -2745,7 +2829,7 @@ def _split_brf(filename):
             chapter.get_body(pages)
 
             if chapter.numbered:
-                is_front_matter = False # Somewhat inefficient because we do it
+                is_front_matter = False  # Somewhat inefficient because we do it
                 unnumbered_counter = 1  # more than once, but no harm
 
                 chapter.write_body()
@@ -2759,7 +2843,7 @@ def _split_brf(filename):
                 else:
                     front_matter += chapter.body
 
-            else: # Must be back matter
+            else:  # Must be back matter
                 chapter.front_matter = False
                 if split_backmatter:
                     chapter.number = unnumbered_counter
@@ -2768,14 +2852,13 @@ def _split_brf(filename):
                 else:
                     back_matter += chapter.body
 
-
             # Now everything was written except the TOC front matter and backmatter
             # if we were not splitting
 
-            with open("frontmatter.brf",'w') as g:
+            with open("frontmatter.brf", "w") as g:
                 g.writelines(front_matter)
             if back_matter != []:
-                with open("backmatter.brf",'w') as g:
+                with open("backmatter.brf", "w") as g:
                     g.writelines(back_matter)
 
             # TODO: add debug message listing all the chapters?
@@ -2941,7 +3024,9 @@ def epub(xml_source, pub_file, out_file, dest_dir, math_format, stringparams):
     # @authored-cover is 'yes' or 'no'.  In the latter case most of the
     # action happens here in the Python
 
-    is_cover_authored = (packaging_tree.xpath("/packaging/cover/@authored-cover")[0] == 'yes')
+    is_cover_authored = (
+        packaging_tree.xpath("/packaging/cover/@authored-cover")[0] == "yes"
+    )
     if is_cover_authored:
         # Build absolute paths and mirror directory structure, except for the
         # transition from authors name for "external" to the actual use of
@@ -3215,6 +3300,7 @@ def epub(xml_source, pub_file, out_file, dest_dir, math_format, stringparams):
 # A helper function to query the latest Runestone
 # Services file, while failing gracefully
 
+
 def _runestone_services(params):
     """Query the very latest Runestone Services file from the RS CDN"""
 
@@ -3223,7 +3309,9 @@ def _runestone_services(params):
     # Canonical location of file of redirections to absolute-latest
     # released version of Runestone Services when parameterized by
     # "latest", otherwise will get a specific previous version
-    services_url_template = 'https://runestone.academy/cdn/runestone/{}/webpack_static_imports.xml'
+    services_url_template = (
+        "https://runestone.academy/cdn/runestone/{}/webpack_static_imports.xml"
+    )
 
     # The  debug.rs.version  string parameter is a bit of a poser.  It is
     # provided via the usual interfaces as if it were really a string parameter
@@ -3235,11 +3323,14 @@ def _runestone_services(params):
     if "debug.rs.version" in params:
         rs_version = params["debug.rs.version"]
         services_url = services_url_template.format(rs_version)
-        msg = '\n'.join(["Requested Runestone Services, version {} from the CDN via the  debug.rs.version  string parameter.",
-            "This is strictly for DEBUGGING and not for PRODUCTION.  The requested version may not exist,",
-            "or there could be a network error and you will get the version in the PreTrext repository.",
-            "Subsequent diagnostic messages may be inaccurate.  Verify your HTML output is as intended."
-            ])
+        msg = "\n".join(
+            [
+                "Requested Runestone Services, version {} from the CDN via the  debug.rs.version  string parameter.",
+                "This is strictly for DEBUGGING and not for PRODUCTION.  The requested version may not exist,",
+                "or there could be a network error and you will get the version in the PreTrext repository.",
+                "Subsequent diagnostic messages may be inaccurate.  Verify your HTML output is as intended.",
+            ]
+        )
         log.info(msg.format(rs_version))
     else:
         services_url = services_url_template.format("latest")
@@ -3260,10 +3351,13 @@ def _runestone_services(params):
         try:
             services_response = requests.get(services_url)
         except requests.exceptions.RequestException as e:
-            msg = '\n'.join(['there was a network problem while trying to retrieve "{}"',
-                             'from the Runestone CDN and the reported problem is:',
-                             '{}'
-                             ])
+            msg = "\n".join(
+                [
+                    'there was a network problem while trying to retrieve "{}"',
+                    "from the Runestone CDN and the reported problem is:",
+                    "{}",
+                ]
+            )
             log.debug(msg.format(services_url, e))
             online_success = False
 
@@ -3271,21 +3365,27 @@ def _runestone_services(params):
     if online_success:
         response_status_code = services_response.status_code
         if response_status_code != 200:
-            msg = '\n'.join(["the file {} was not found at the Runestone CDN",
-                             "the server returned response code {}"
-                             ])
+            msg = "\n".join(
+                [
+                    "the file {} was not found at the Runestone CDN",
+                    "the server returned response code {}",
+                ]
+            )
             log.debug(msg.format(services_url, response_status_code))
             online_success = False
 
-    if not(online_success):
-        msg = '\n'.join(["unable to get the very latest Runestone Services from the Runestone CDN",
-                         "this is due to an error reported immediately prior. A slightly older",
-                         "version will be used based on information in the PreTeXt repository,",
-                         "so this is not a fatal error, and a fallback is being used"
-                         ])
+    if not (online_success):
+        msg = "\n".join(
+            [
+                "unable to get the very latest Runestone Services from the Runestone CDN",
+                "this is due to an error reported immediately prior. A slightly older",
+                "version will be used based on information in the PreTeXt repository,",
+                "so this is not a fatal error, and a fallback is being used",
+            ]
+        )
         log.debug(msg)
         # and we cannot proceed, so return with a result that is empty
-        return ('', '', '', '')
+        return ("", "", "", "")
 
     # Now online_success is still True, we have not return'ed
     # and services_response should be meaningful
@@ -3298,20 +3398,21 @@ def _runestone_services(params):
     # This mirrors the XML file format, including multiple "item"
     #
     # colon-delimited string of the JS files
-    altrs_js = ''
+    altrs_js = ""
     for js in services.xpath("/all/js/item"):
-        altrs_js = altrs_js + js.text + ':'
+        altrs_js = altrs_js + js.text + ":"
     altrs_js = altrs_js[:-1]
     # colon-delimited string of the CSS files
-    altrs_css = ''
+    altrs_css = ""
     for css in services.xpath("/all/css/item"):
-        altrs_css = altrs_css + css.text + ':'
+        altrs_css = altrs_css + css.text + ":"
     altrs_css = altrs_css[:-1]
     # single CDN URL
     altrs_cdn_url = services.xpath("/all/cdn-url")[0].text
     # single Runestone Services version
     altrs_version = services.xpath("/all/version")[0].text
     return (altrs_js, altrs_css, altrs_cdn_url, altrs_version)
+
 
 def html(
     xml, pub_file, stringparams, xmlid_root, file_format, extra_xsl, out_file, dest_dir
@@ -3332,13 +3433,15 @@ def html(
     # See if we can get the very latest Runestone Services from the Runestone
     # CDN.  A non-empty version (fourth parameter) indicates success
     #  "altrs" = alternate Runestone
-    altrs_js, altrs_css, altrs_cdn_url, altrs_version = _runestone_services(stringparams)
-    online_success = (altrs_version != '')
+    altrs_js, altrs_css, altrs_cdn_url, altrs_version = _runestone_services(
+        stringparams
+    )
+    online_success = altrs_version != ""
     # report repository version always, supersede if newer found
-    msg = 'Runestone Services (via PreTeXt repository): version {}'
+    msg = "Runestone Services (via PreTeXt repository): version {}"
     log.info(msg.format(get_runestone_services_version()))
     if online_success:
-        msg = 'Runestone Services (using newer, via online CDN query): version {}'
+        msg = "Runestone Services (using newer, via online CDN query): version {}"
         log.info(msg.format(altrs_version))
     # with a successful online query, we load up some string parameters
     # the receiving stylesheet has the parameters default to empty strings
@@ -3361,22 +3464,13 @@ def html(
     else:
         extraction_xslt = os.path.join(get_ptx_xsl_path(), "pretext-html.xsl")
 
-    # Managed, generated images
-    # copytree() does not overwrite since
-    # tmp_dir is created anew on each use
-    if external_abs:
-        external_dir = os.path.join(tmp_dir, "external")
-        shutil.copytree(external_abs, external_dir)
-
-    if generated_abs:
-        generated_dir = os.path.join(tmp_dir, "generated")
-        shutil.copytree(generated_abs, generated_dir)
+    manage_directories(tmp_dir, external_abs=external_abs, generated_abs=generated_abs)
 
     # Write output into temporary directory
     log.info("converting {} to HTML in {}".format(xml, tmp_dir))
     xsltproc(extraction_xslt, xml, None, tmp_dir, stringparams)
 
-    if file_format  == "html":
+    if file_format == "html":
         # with multiple files, we need to copy a tree, and
         # shutil.copytree() will balk at overwriting directories
         # before Python 3.8.  The  distutils  module is old
@@ -3394,7 +3488,9 @@ def html(
                 os.path.join(tmp_dir, zip_file)
             )
         )
-        with zipfile.ZipFile(zip_file, mode="w", compression=zipfile.ZIP_DEFLATED) as epub:
+        with zipfile.ZipFile(
+            zip_file, mode="w", compression=zipfile.ZIP_DEFLATED
+        ) as epub:
             for root, dirs, files in os.walk("."):
                 for name in files:
                     epub.write(os.path.join(root, name))
@@ -3468,6 +3564,10 @@ def latex(xml, pub_file, stringparams, extra_xsl, out_file, dest_dir):
     log.info("converting {} to LaTeX as {}".format(xml, derivedname))
     xsltproc(extraction_xslt, xml, derivedname, None, stringparams)
 
+    # Manage directories so LaTeX can be built in-place
+    external_abs, generated_abs = get_managed_directories(xml, pub_file)
+    manage_directories(dest_dir, external_abs=external_abs, generated_abs=generated_abs)
+
 
 ###################
 # Conversion to PDF
@@ -3504,16 +3604,7 @@ def pdf(xml, pub_file, stringparams, extra_xsl, out_file, dest_dir, method):
     # A "None" value will indicate there was no information
     # (an empty string is impossible due to a slash always being present?)
 
-    # Managed, generated images
-    # copytree() does not overwrite since
-    # tmp_dir is created anew on each use
-    if generated_abs:
-        generated_dir = os.path.join(tmp_dir, "generated")
-        shutil.copytree(generated_abs, generated_dir)
-    # externally manufactured images
-    if external_abs:
-        external_dir = os.path.join(tmp_dir, "external")
-        shutil.copytree(external_abs, external_dir)
+    manage_directories(tmp_dir, external_abs=external_abs, generated_abs=generated_abs)
 
     # now work in temporary directory since LaTeX is a bit incapable
     # of working outside of the current working directory
@@ -3539,9 +3630,11 @@ def pdf(xml, pub_file, stringparams, extra_xsl, out_file, dest_dir, method):
         shutil.copy2(pdfname, dest_dir)
     os.chdir(owd)
 
+
 #################
 # XSLT Processing
 #################
+
 
 # Pythonic replacement for xsltproc executable
 def xsltproc(xsl, xml, result, output_dir=None, stringparams={}, outputfn=log.info):
@@ -3678,8 +3771,8 @@ def xsltproc(xsl, xml, result, output_dir=None, stringparams={}, outputfn=log.in
 #
 ########################
 
-def validate(xml_source, out_file, dest_dir):
 
+def validate(xml_source, out_file, dest_dir):
     try:
         import requests  # post()
     except ImportError:
@@ -3687,7 +3780,7 @@ def validate(xml_source, out_file, dest_dir):
         raise ImportError(__module_warning.format("requests"))
 
     # JaaS server location
-    server_url = 'https://mathgenealogy.org:9000/validate'
+    server_url = "https://mathgenealogy.org:9000/validate"
     # Alias for XInclude namespace
     NSMAP = {"xi": "http://www.w3.org/2001/XInclude"}
     # home for zip file construction
@@ -3721,7 +3814,9 @@ def validate(xml_source, out_file, dest_dir):
                 if "href" in elt.attrib:
                     href = elt.attrib["href"]
                 else:
-                    raise ValueError("an xi:include element lacks the expected @href attribute")
+                    raise ValueError(
+                        "an xi:include element lacks the expected @href attribute"
+                    )
                 # the normaized filename, relative to the main file location (d)
                 # this is where the eventual results are first created
                 rel_path = os.path.normpath(os.path.join(f_dir, href))
@@ -3732,11 +3827,11 @@ def validate(xml_source, out_file, dest_dir):
                 # will fail, AND we don't need to examine it further,
                 # as it is a dead-end in the tree (can't xi:include anyway)
                 parsing = None
-                if 'parse' in elt.attrib:
-                    parsing = elt.attrib['parse']
+                if "parse" in elt.attrib:
+                    parsing = elt.attrib["parse"]
                 # Usually we want to inspect a file for more includes,
                 # so we add most to the list of files to examine next
-                if not(parsing == 'text'):
+                if not (parsing == "text"):
                     next_files.append(rel_path)
         # recycle next_files into new_files, and next_file
         # will be re-initialized as while loop resumes
@@ -3748,7 +3843,9 @@ def validate(xml_source, out_file, dest_dir):
     log.info("packaging source temporarily as {}".format(zip_filename))
     owd = os.getcwd()
     os.chdir(d)
-    with zipfile.ZipFile(zip_filename, mode="w", compression=zipfile.ZIP_DEFLATED) as zip_file:
+    with zipfile.ZipFile(
+        zip_filename, mode="w", compression=zipfile.ZIP_DEFLATED
+    ) as zip_file:
         # set() will avoid duplicate files included twice (or more)
         for f in set(all_files):
             zip_file.write(f)
@@ -3756,8 +3853,8 @@ def validate(xml_source, out_file, dest_dir):
 
     # fresh schema from the PreTeXt distribution
     schema_filename = os.path.join(get_ptx_path(), "schema", "pretext.rng")
-    files = {'source': open(zip_filename,'rb'), 'rng': open(schema_filename,'rb')}
-    data = {'mainfile': base}
+    files = {"source": open(zip_filename, "rb"), "rng": open(schema_filename, "rb")}
+    data = {"mainfile": base}
     log.info("communicating with server at {}".format(server_url))
     r = requests.post(server_url, data=data, files=files)
 
@@ -3843,7 +3940,9 @@ def get_source_path(source_file):
 def get_runestone_services_version():
     """Examine Runestone Services file for version number"""
 
-    services_file = os.path.join(get_ptx_path(), "xsl", "support", "runestone-services.xml")
+    services_file = os.path.join(
+        get_ptx_path(), "xsl", "support", "runestone-services.xml"
+    )
     services = ET.parse(services_file)
     version_element = services.xpath("/all/version")[0]
     return version_element.text
@@ -3992,7 +4091,9 @@ def release_temporary_directories():
             # reset list of temp direcotries to empty, to avoid duplicate requests
             __temps = []
     else:
-        log.debug("Temporary directories left behind for inspection: {}".format(__temps))
+        log.debug(
+            "Temporary directories left behind for inspection: {}".format(__temps)
+        )
 
 
 def verify_input_directory(inputdir):
@@ -4046,7 +4147,7 @@ def get_managed_directories(xml_source, pub_file):
                     'the directory "{}" implied by the value "{}" in the',
                     '"source/directories/@{}" entry of the publisher file does not',
                     "exist. Check the spelling, create the necessary directory, or entirely",
-                    'remove the whole "source/directories" element of the publisher file.'
+                    'remove the whole "source/directories" element of the publisher file.',
                 ]
             )
             # attribute absent => None
@@ -4059,7 +4160,9 @@ def get_managed_directories(xml_source, pub_file):
                 try:
                     generated = verify_input_directory(abs_path)
                 except:
-                    raise ValueError(missing_dir_error.format(abs_path, raw_path, gen_attr))
+                    raise ValueError(
+                        missing_dir_error.format(abs_path, raw_path, gen_attr)
+                    )
             # attribute absent => None
             if ext_attr in attributes_dict.keys():
                 raw_path = attributes_dict[ext_attr]
@@ -4070,9 +4173,23 @@ def get_managed_directories(xml_source, pub_file):
                 try:
                     external = verify_input_directory(abs_path)
                 except:
-                    raise ValueError(missing_dir_error.format(abs_path, raw_path, ext_attr))
+                    raise ValueError(
+                        missing_dir_error.format(abs_path, raw_path, ext_attr)
+                    )
     # pair of discovered absolute paths
     return (generated, external)
+
+
+def manage_directories(output_dir, external_abs=None, generated_abs=None):
+    # Copies external and generated directories from absolute paths set in external_abs
+    # and generated_abs (unless set to None) into the specified output_dir.
+    if external_abs is not None:
+        external_dir = os.path.join(output_dir, "external")
+        shutil.copytree(external_abs, external_dir, dirs_exist_ok=True)
+
+    if generated_abs is not None:
+        generated_dir = os.path.join(output_dir, "generated")
+        shutil.copytree(generated_abs, generated_dir, dirs_exist_ok=True)
 
 
 def targz(output, source_dir):
